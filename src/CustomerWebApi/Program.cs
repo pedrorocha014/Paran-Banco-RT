@@ -1,0 +1,60 @@
+using Infrastructure;
+using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Application;
+using MassTransit;
+using Microsoft.Extensions.Options;
+using Infrastructure.Messaging;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+
+builder.Services.AddControllers();
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication();
+
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        var options = context.GetRequiredService<IOptions<RabbitMqOptions>>().Value;
+        var vhost = (options.VirtualHost ?? "/").Trim();
+        vhost = Uri.EscapeDataString(vhost.TrimStart('/'));
+        var hostUri = new Uri($"rabbitmq://{options.Host}:{options.Port}/{vhost}");
+
+        cfg.Host(hostUri, h =>
+        {
+            h.Username(options.Username);
+            h.Password(options.Password);
+        });
+    });
+});
+
+var app = builder.Build();
+
+// Apply pending migrations at startup (dev/test)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+}
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();

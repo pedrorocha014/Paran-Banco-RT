@@ -1,0 +1,28 @@
+Como executar o Docker Compose (exemplo: profile essentials)
+
+Execute:
+
+```bash
+docker compose -f solutionItems/compose.yaml --profile essentials up -d
+```
+
+Para parar e remover os containers:
+
+```bash
+docker compose -f solutionItems/compose.yaml --profile essentials down
+```
+
+ Como trabalhar com migrations (EF Core)
+ 
+ Gerar uma migration (no projeto Infrastructure):
+ 
+ ```bash
+ dotnet ef migrations add NOME_DA_MIGRATION -p ./src/Infrastructure
+ ```
+ 
+ Aplicar migrations no banco:
+ 
+ ```bash
+ dotnet ef database update -p ./src/Infrastructure
+ ```
+
