@@ -53,5 +53,8 @@ services:
         -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "proposal.approved queue created";
       curl -s -u guest:guest -H "content-type:application/json" -X PUT \
         http://rabbitmq:15672/api/queues/%2F/card.issue.requested \
-        -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "card.issue.requested queue created"'
+        -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "card.issue.requested queue created";
+      curl -s -u guest:guest -H "content-type:application/json" -X PUT \
+        http://rabbitmq:15672/api/queues/%2F/created.consumer.dlq \
+        -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "created.consumer.dlq queue created"'
     profiles: ["essentials"]

@@ -3,12 +3,25 @@ using Core.Messaging.Contracts;
 using Infrastructure;
 using Infrastructure.Messaging;
 using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Options;
 using Worker;
 
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// Configurar HttpClient para fazer chamadas à ProposalWebApi
+builder.Services.AddHttpClient("ProposalWebApi", client =>
+{
+    client.BaseAddress = new Uri("https://localhost:44393");
+    client.DefaultRequestHeaders.Add("Accept", "text/plain");
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+});
 
 builder.Services.AddMassTransit(x =>
 {
