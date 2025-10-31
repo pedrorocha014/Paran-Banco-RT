@@ -23,6 +23,11 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
 
     public void Update(T entity)
         => _dbContext.Set<T>().Update(entity);
+
+    public async Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Set<T>().FindAsync([id], cancellationToken);
+    }
 }
 
 

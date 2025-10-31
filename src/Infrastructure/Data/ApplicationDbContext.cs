@@ -19,7 +19,7 @@ public class ApplicationDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         // Registrar o enum do PostgreSQL com valores em minúscula
-        modelBuilder.HasPostgresEnum("proposal_status", new[] { "created", "approved", "denied" });
+        modelBuilder.HasPostgresEnum("proposal_status", new[] { "created", "approved", "denied", "completed" });
 
         modelBuilder.Entity<Customer>(entity =>
         {
@@ -60,6 +60,12 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.UpdatedAt);
 
             entity.HasIndex(e => e.CustomerId);
+
+            // Relacionamento 1:1 com Card
+            entity.HasOne(p => p.Card)
+                .WithOne(c => c.Proposal)
+                .HasForeignKey<Card>(c => c.ProposalId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Card>(entity =>
@@ -70,6 +76,9 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.CustomerId)
                 .IsRequired();
 
+            entity.Property(e => e.ProposalId)
+                .IsRequired();
+
             entity.Property(e => e.Limite)
                 .IsRequired()
                 .HasColumnType("decimal(18,2)");
@@ -78,6 +87,8 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.UpdatedAt);
 
             entity.HasIndex(e => e.CustomerId);
+            entity.HasIndex(e => e.ProposalId)
+                .IsUnique();
         });
     }
 }
