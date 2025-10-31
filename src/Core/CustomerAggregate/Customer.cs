@@ -6,6 +6,7 @@ public class Customer
     public string Name { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public ICollection<Proposal> Proposals { get; set; } = [];
 }
 
 
