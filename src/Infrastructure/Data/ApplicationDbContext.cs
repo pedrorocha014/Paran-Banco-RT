@@ -12,6 +12,7 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Proposal> Proposals => Set<Proposal>();
+    public DbSet<Card> Cards => Set<Card>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -36,6 +37,11 @@ public class ApplicationDbContext : DbContext
                 .WithOne(p => p.Customer)
                 .HasForeignKey(p => p.CustomerId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.Cards)
+                .WithOne(c => c.Customer)
+                .HasForeignKey(c => c.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Proposal>(entity =>
@@ -49,6 +55,24 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Status)
                 .IsRequired()
                 .HasColumnType("proposal_status");
+
+            entity.Property(e => e.CreatedAt);
+            entity.Property(e => e.UpdatedAt);
+
+            entity.HasIndex(e => e.CustomerId);
+        });
+
+        modelBuilder.Entity<Card>(entity =>
+        {
+            entity.ToTable("Cards");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.CustomerId)
+                .IsRequired();
+
+            entity.Property(e => e.Limite)
+                .IsRequired()
+                .HasColumnType("decimal(18,2)");
 
             entity.Property(e => e.CreatedAt);
             entity.Property(e => e.UpdatedAt);

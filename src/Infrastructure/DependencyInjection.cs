@@ -27,6 +27,7 @@ public static class DependencyInjection
 
         services.AddScoped<IGenericRepository<Customer>, GenericRepository<Customer>>();
         services.AddScoped<IGenericRepository<Proposal>, GenericRepository<Proposal>>();
+        services.AddScoped<IGenericRepository<Card>, GenericRepository<Card>>();
 
         services.AddSingleton<IEventDispatcher, EventDispatcher>();
         services.AddScoped<IEventHandler<ProposalCreatedEvent>, ProposalCreatedEventHandler>();
