@@ -6,6 +6,7 @@ using Core.Shared.Events;
 using Infrastructure.Data;
 using Infrastructure.Messaging;
 using Infrastructure.Repository;
+using Infrastructure.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +29,7 @@ public static class DependencyInjection
         services.AddScoped<IGenericRepository<Customer>, GenericRepository<Customer>>();
         services.AddScoped<IGenericRepository<Proposal>, GenericRepository<Proposal>>();
         services.AddScoped<IGenericRepository<Card>, GenericRepository<Card>>();
+        services.AddScoped<IUnitOfWork, UnitOfWork.UnitOfWork>(); // Melhorar esse nome depois
 
         services.AddSingleton<IEventDispatcher, EventDispatcher>();
         services.AddScoped<IEventHandler<ProposalCreatedEvent>, ProposalCreatedEventHandler>();

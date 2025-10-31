@@ -6,7 +6,8 @@ namespace Application.UseCases.Cards;
 
 public class CreateCardUseCase(
     IGenericRepository<Card> cardRepository,
-    IGenericRepository<Proposal> proposalRepository
+    IGenericRepository<Proposal> proposalRepository,
+    IUnitOfWork unitOfWork
     ) : ICreateCardUseCase
 {
     public async Task<CreateCardResult> ExecuteAsync(Guid proposalId, decimal limit, CancellationToken cancellationToken = default)
@@ -30,17 +31,25 @@ public class CreateCardUseCase(
             UpdatedAt = now
         };
 
-        // To Do: Utilizar atomic transaction
+        await using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            await cardRepository.AddAsync(card, cancellationToken);
 
-        await cardRepository.AddAsync(card, cancellationToken);
+            proposal.Status = ProposalStatus.Completed;
+            proposal.UpdatedAt = now;
+            proposalRepository.Update(proposal);
 
-        proposal.Status = ProposalStatus.Completed;
-        proposal.UpdatedAt = now;
-        proposalRepository.Update(proposal);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
-        await cardRepository.SaveChangesAsync(cancellationToken);
-
-        return new CreateCardResult(card.Id, card.ProposalId, limit);
+            return new CreateCardResult(card.Id, card.ProposalId, limit);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 }
 
