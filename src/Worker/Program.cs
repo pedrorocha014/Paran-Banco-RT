@@ -23,9 +23,21 @@ builder.Services.AddHttpClient("ProposalWebApi", client =>
     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
 });
 
+// Configurar HttpClient para fazer chamadas à CardWebApi
+builder.Services.AddHttpClient("CardWebApi", client =>
+{
+    client.BaseAddress = new Uri("https://localhost:44309");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+});
+
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<Worker.Consumers.CustomerCreatedConsumer>();
+    x.AddConsumer<Worker.Consumers.ProposalApprovedConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
@@ -43,6 +55,11 @@ builder.Services.AddMassTransit(x =>
         cfg.ReceiveEndpoint(MessagingConstants.CustomerCreatedQueue, e =>
         {
             e.ConfigureConsumer<Worker.Consumers.CustomerCreatedConsumer>(context);
+        });
+
+        cfg.ReceiveEndpoint(MessagingConstants.ProposalApprovedQueue, e =>
+        {
+            e.ConfigureConsumer<Worker.Consumers.ProposalApprovedConsumer>(context);
         });
     });
 });
