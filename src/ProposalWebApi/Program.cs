@@ -1,11 +1,48 @@
+using Infrastructure;
+using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Application;
+using MassTransit;
+using Microsoft.Extensions.Options;
+using Infrastructure.Messaging;
+using ProposalWebApi.BackgroundServices;
+using Core.CustomerAggregate.Events;
+using Core.Shared.Events;
+using Application.Events.Proposal;
+using System.Text.Json.Serialization;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication();
+
+builder.Services.AddHostedService<QueuedHostedService<ProposalCreatedEvent>>();
+
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        var options = context.GetRequiredService<IOptions<RabbitMqOptions>>().Value;
+        var vhost = (options.VirtualHost ?? "/").Trim();
+        vhost = Uri.EscapeDataString(vhost.TrimStart('/'));
+        var hostUri = new Uri($"rabbitmq://{options.Host}:{options.Port}/{vhost}");
+
+        cfg.Host(hostUri, h =>
+        {
+            h.Username(options.Username);
+            h.Password(options.Password);
+        });
+    });
+});
 
 var app = builder.Build();
 

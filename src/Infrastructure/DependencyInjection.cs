@@ -1,5 +1,8 @@
+using Application.Events.Proposal;
 using Core.CustomerAggregate;
+using Core.CustomerAggregate.Events;
 using Core.Interfaces;
+using Core.Shared.Events;
 using Infrastructure.Data;
 using Infrastructure.Messaging;
 using Infrastructure.Repository;
@@ -17,9 +20,18 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("DefaultConnection");
 
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MapEnum<ProposalStatus>("proposal_status");
+            }));
 
         services.AddScoped<IGenericRepository<Customer>, GenericRepository<Customer>>();
+        services.AddScoped<IGenericRepository<Proposal>, GenericRepository<Proposal>>();
+
+        services.AddSingleton<IEventDispatcher, EventDispatcher>();
+        services.AddScoped<IEventHandler<ProposalCreatedEvent>, ProposalCreatedEventHandler>();
+        services.AddSingleton(typeof(IBackgroundTaskQueue<>), typeof(BackgroundTaskQueue<>));
+        
 
         var rabbitSection = configuration.GetSection(RabbitMqOptions.SectionName);
         var rabbitOptions = new RabbitMqOptions

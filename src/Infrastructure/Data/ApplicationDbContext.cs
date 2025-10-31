@@ -17,8 +17,8 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Registrar o enum do PostgreSQL
-        modelBuilder.HasPostgresEnum<ProposalStatus>("proposal_status");
+        // Registrar o enum do PostgreSQL com valores em minúscula
+        modelBuilder.HasPostgresEnum("proposal_status", new[] { "created", "approved", "denied" });
 
         modelBuilder.Entity<Customer>(entity =>
         {

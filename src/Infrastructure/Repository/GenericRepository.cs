@@ -20,6 +20,9 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
         return _dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    public void Update(T entity)
+        => _dbContext.Set<T>().Update(entity);
 }
 
 

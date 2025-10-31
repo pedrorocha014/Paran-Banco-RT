@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CustomerWebApi.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/customers")]
 public class CustomersController(ICreateCustomerUseCase createCustomerUseCase) : ControllerBase
 {
     [HttpPost]
