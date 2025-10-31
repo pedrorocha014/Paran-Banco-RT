@@ -44,5 +44,14 @@ services:
       'until curl -s -u guest:guest http://rabbitmq:15672/api/healthchecks/node; do echo waiting for rabbitmq; sleep 2; done;
       curl -s -u guest:guest -H "content-type:application/json" -X PUT \
         http://rabbitmq:15672/api/queues/%2F/customer.created \
-        -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "queue created"'
+        -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "customer.created queue created";
+      curl -s -u guest:guest -H "content-type:application/json" -X PUT \
+        http://rabbitmq:15672/api/queues/%2F/proposal.denied \
+        -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "proposal.denied queue created";
+      curl -s -u guest:guest -H "content-type:application/json" -X PUT \
+        http://rabbitmq:15672/api/queues/%2F/proposal.approved \
+        -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "proposal.approved queue created";
+      curl -s -u guest:guest -H "content-type:application/json" -X PUT \
+        http://rabbitmq:15672/api/queues/%2F/card.issue.requested \
+        -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "card.issue.requested queue created"'
     profiles: ["essentials"]
