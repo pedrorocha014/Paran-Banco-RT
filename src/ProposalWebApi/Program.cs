@@ -2,6 +2,7 @@ using Infrastructure;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Application;
+using Application.Middleware;
 using MassTransit;
 using Microsoft.Extensions.Options;
 using Infrastructure.Messaging;
@@ -52,6 +53,8 @@ builder.Services.AddMassTransit(x =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseGlobalExceptionHandler();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
