@@ -11,16 +11,6 @@ public class CardsController(ICreateCardUseCase createCardUseCase) : ControllerB
     [HttpPost]
     public async Task<ActionResult<CreateCardResponseDto>> Create([FromBody] CreateCardRequestDto request, CancellationToken cancellationToken)
     {
-        if (request.ProposalId == Guid.Empty)
-        {
-            return BadRequest("ProposalId is required.");
-        }
-
-        if (request.Limit <= 0)
-        {
-            return BadRequest("Limit must be greater than zero.");
-        }
-
         try
         {
             var result = await createCardUseCase.ExecuteAsync(request.ProposalId, request.Limit, cancellationToken);

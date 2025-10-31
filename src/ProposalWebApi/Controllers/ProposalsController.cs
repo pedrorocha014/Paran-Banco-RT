@@ -11,11 +11,6 @@ public class ProposalsController(ICreateProposalUseCase createProposalUseCase) :
     [HttpPost]
     public async Task<ActionResult<CreateProposalResponseDto>> Create([FromBody] CreateProposalRequestDto request, CancellationToken cancellationToken)
     {
-        if (request.CustomerId == Guid.Empty)
-        {
-            return BadRequest("CustomerId is required.");
-        }
-
         var result = await createProposalUseCase.ExecuteAsync(request.CustomerId, cancellationToken);
         return CreatedAtAction(nameof(Create), new { id = result.ProposalId }, new CreateProposalResponseDto 
         { 

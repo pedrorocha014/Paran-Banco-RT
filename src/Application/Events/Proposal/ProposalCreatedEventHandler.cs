@@ -14,7 +14,8 @@ public class ProposalCreatedEventHandler(
 {
     public async Task Handle(ProposalCreatedEvent @event, CancellationToken cancellationToken = default)
     {
-        var score = await CalculateScoreAsync();
+        // Simula uma chamada externa para consultar o score
+        var score = await CalculateScoreAsync(); 
 
         @event.Proposal.EvaluateScore(score);
 

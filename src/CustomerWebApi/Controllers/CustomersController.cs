@@ -11,11 +11,6 @@ public class CustomersController(ICreateCustomerUseCase createCustomerUseCase) :
     [HttpPost]
     public async Task<ActionResult<CreateCustomerResponseDto>> Create([FromBody] CreateCustomerRequestDto request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.Name))
-        {
-            return BadRequest("Name is required.");
-        }
-
         var id = await createCustomerUseCase.ExecuteAsync(request.Name, cancellationToken);
         return CreatedAtAction(nameof(Create), new { id }, new CreateCustomerResponseDto { Id = id });
     }

@@ -3,12 +3,17 @@ using Application;
 using MassTransit;
 using Microsoft.Extensions.Options;
 using Infrastructure.Messaging;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using CardWebApi.Controllers.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateCardRequestDtoValidator>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
