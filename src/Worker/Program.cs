@@ -6,33 +6,39 @@ using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Options;
+using Polly;
 using Worker;
+using Worker.Resilience;
 
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Configurar HttpClient para fazer chamadas à ProposalWebApi
+// Configurar HttpClient para fazer chamadas à ProposalWebApi com políticas de resiliência
 builder.Services.AddHttpClient("ProposalWebApi", client =>
 {
     client.BaseAddress = new Uri("https://localhost:44393");
     client.DefaultRequestHeaders.Add("Accept", "text/plain");
+    client.Timeout = TimeSpan.FromSeconds(300);
 })
 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
 {
     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
-});
+})
+.AddPolicyHandler(ResiliencePolicies.GetResiliencePolicy());
 
-// Configurar HttpClient para fazer chamadas à CardWebApi
+// Configurar HttpClient para fazer chamadas à CardWebApi com políticas de resiliência
 builder.Services.AddHttpClient("CardWebApi", client =>
 {
     client.BaseAddress = new Uri("https://localhost:44309");
     client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromMinutes(300);
 })
 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
 {
     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
-});
+})
+.AddPolicyHandler(ResiliencePolicies.GetResiliencePolicy());
 
 builder.Services.AddMassTransit(x =>
 {
@@ -60,6 +66,28 @@ builder.Services.AddMassTransit(x =>
         cfg.ReceiveEndpoint(MessagingConstants.ProposalApprovedQueue, e =>
         {
             e.ConfigureConsumer<Worker.Consumers.ProposalApprovedConsumer>(context);
+            
+            // Configurar retry com exponential backoff
+            e.UseMessageRetry(r =>
+            {
+                r.Exponential(
+                    retryLimit: 5,
+                    minInterval: TimeSpan.FromSeconds(1),
+                    maxInterval: TimeSpan.FromSeconds(30),
+                    intervalDelta: TimeSpan.FromSeconds(2));
+                
+                r.Ignore<ArgumentException>(); // Não retry para argumentos inválidos
+            });
+            
+            // Configurar DLQ após todos os retries falharem
+            e.UseDelayedRedelivery(r =>
+            {
+                r.Exponential(
+                    retryLimit: 3,
+                    minInterval: TimeSpan.FromMinutes(1),
+                    maxInterval: TimeSpan.FromMinutes(10),
+                    intervalDelta: TimeSpan.FromMinutes(2));
+            });
         });
     });
 });
