@@ -16,52 +16,30 @@ public class ProposalCreatedEventHandler(
     {
         var score = await CalculateScoreAsync();
 
-        ProposalStatus finalStatus;
-        int numberOfCards = 0;
-
-        if (score >= 0 && score <= 100)
-        {
-            finalStatus = ProposalStatus.Denied;
-        }
-        else if (score >= 101 && score <= 500)
-        {
-            finalStatus = ProposalStatus.Approved;
-            numberOfCards = 1;
-        }
-        else if (score >= 501 && score <= 1000)
-        {
-            finalStatus = ProposalStatus.Approved;
-            numberOfCards = 2;
-        }
-        else
-        {
-            finalStatus = ProposalStatus.Denied;
-        }
-
-        @event.Proposal.Status = finalStatus;
-        var now = DateTime.UtcNow;
-        @event.Proposal.UpdatedAt = now;
+        @event.Proposal.EvaluateScore(score);
 
         repository.Update(@event.Proposal);
         var rows = await repository.SaveChangesAsync(cancellationToken);
 
         if (rows > 0)
         {
-            if (finalStatus == ProposalStatus.Denied)
+            var now = DateTime.UtcNow;
+
+            if (@event.Proposal.Status == ProposalStatus.Denied)
             {
                 // Publicar proposal.denied
                 var deniedEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{MessagingConstants.ProposalDeniedQueue}"));
                 await deniedEndpoint.Send(new ProposalDenied(@event.Proposal.Id, @event.Proposal.CustomerId, now), cancellationToken);
             }
-            else if (finalStatus == ProposalStatus.Approved)
+            else if (@event.Proposal.Status == ProposalStatus.Approved)
             {
                 // Publicar proposal.approved
                 var approvedEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{MessagingConstants.ProposalApprovedQueue}"));
-                await approvedEndpoint.Send(new ProposalApproved(@event.Proposal.Id, @event.Proposal.CustomerId, numberOfCards, now), cancellationToken);
+                await approvedEndpoint.Send(new ProposalApproved(@event.Proposal.Id, @event.Proposal.CustomerId, @event.Proposal.NumberOfCardsAllowed, now), cancellationToken);
 
                 // Publicar card.issue.requested para cada cartão
                 var cardEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{MessagingConstants.CardIssueRequestedQueue}"));
-                for (int i = 0; i < numberOfCards; i++)
+                for (int i = 0; i < @event.Proposal.NumberOfCardsAllowed; i++)
                 {
                     var idempotencyKey = $"{@event.Proposal.Id}-card-{i + 1}";
                     await cardEndpoint.Send(new CardIssueRequested(@event.Proposal.Id, @event.Proposal.CustomerId, idempotencyKey, now), cancellationToken);

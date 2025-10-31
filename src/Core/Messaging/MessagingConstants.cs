@@ -8,5 +8,3 @@ public static class MessagingConstants
     public const string CardIssueRequestedQueue = "card.issue.requested";
     public const string CreatedConsumerDlq = "created.consumer.dlq";
 }
-
-
