@@ -1,4 +1,5 @@
 using Application.Abstractions;
+using Application.Extensions;
 using CardWebApi.Controllers.Dto;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,20 +12,19 @@ public class CardsController(ICreateCardUseCase createCardUseCase) : ControllerB
     [HttpPost]
     public async Task<ActionResult<CreateCardResponseDto>> Create([FromBody] CreateCardRequestDto request, CancellationToken cancellationToken)
     {
-        try
+        var result = await createCardUseCase.ExecuteAsync(request.ProposalId, request.Limit, cancellationToken);
+        
+        if (result.IsFailed)
         {
-            var result = await createCardUseCase.ExecuteAsync(request.ProposalId, request.Limit, cancellationToken);
-            return CreatedAtAction(nameof(Create), new { id = result.CardId }, new CreateCardResponseDto
-            {
-                Id = result.CardId,
-                ProposalId = result.ProposalId,
-                Limit = result.Limit
-            });
+            return BadRequest(result.ToValidationProblemDetails());
         }
-        catch (InvalidOperationException ex)
+
+        return CreatedAtAction(nameof(Create), new { id = result.Value.CardId }, new CreateCardResponseDto
         {
-            return BadRequest(ex.Message);
-        }
+            Id = result.Value.CardId,
+            ProposalId = result.Value.ProposalId,
+            Limit = result.Value.Limit
+        });
     }
 }
 

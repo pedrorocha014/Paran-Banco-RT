@@ -1,4 +1,5 @@
 using Core.Interfaces;
+using FluentResults;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -13,15 +14,30 @@ public class UnitOfWork : IUnitOfWork
         _dbContext = dbContext;
     }
 
-    public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public async Task<Result> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        return _dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail(ex.Message);
+        }
     }
 
-    public async Task<IDatabaseTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<IDatabaseTransaction>> BeginTransactionAsync(CancellationToken cancellationToken = default)
     {
-        var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-        return new DatabaseTransaction(transaction);
+        try
+        {
+            var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+            return Result.Ok<IDatabaseTransaction>(new DatabaseTransaction(transaction));
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail<IDatabaseTransaction>(ex.Message);
+        }
     }
 }
 
@@ -34,14 +50,30 @@ public class DatabaseTransaction : IDatabaseTransaction
         _transaction = transaction;
     }
 
-    public async Task CommitAsync(CancellationToken cancellationToken = default)
+    public async Task<Result> CommitAsync(CancellationToken cancellationToken = default)
     {
-        await _transaction.CommitAsync(cancellationToken);
+        try
+        {
+            await _transaction.CommitAsync(cancellationToken);
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail(ex.Message);
+        }
     }
 
-    public async Task RollbackAsync(CancellationToken cancellationToken = default)
+    public async Task<Result> RollbackAsync(CancellationToken cancellationToken = default)
     {
-        await _transaction.RollbackAsync(cancellationToken);
+        try
+        {
+            await _transaction.RollbackAsync(cancellationToken);
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail(ex.Message);
+        }
     }
 
     public async ValueTask DisposeAsync()

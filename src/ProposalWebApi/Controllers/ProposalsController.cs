@@ -1,4 +1,5 @@
 using Application.Abstractions;
+using Application.Extensions;
 using ProposalWebApi.Controllers.Dto;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,11 +13,17 @@ public class ProposalsController(ICreateProposalUseCase createProposalUseCase) :
     public async Task<ActionResult<CreateProposalResponseDto>> Create([FromBody] CreateProposalRequestDto request, CancellationToken cancellationToken)
     {
         var result = await createProposalUseCase.ExecuteAsync(request.CustomerId, cancellationToken);
-        return CreatedAtAction(nameof(Create), new { id = result.ProposalId }, new CreateProposalResponseDto 
+        
+        if (result.IsFailed)
+        {
+            return BadRequest(result.ToValidationProblemDetails());
+        }
+
+        return CreatedAtAction(nameof(Create), new { id = result.Value.ProposalId }, new CreateProposalResponseDto 
         { 
-            Id = result.ProposalId,
-            CustomerId = result.CustomerId,
-            Status = result.Status
+            Id = result.Value.ProposalId,
+            CustomerId = result.Value.CustomerId,
+            Status = result.Value.Status
         });
     }
 }

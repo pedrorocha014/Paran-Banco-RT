@@ -1,8 +1,10 @@
+using FluentResults;
+
 namespace Application.Abstractions;
 
 public interface ICreateCustomerUseCase
 {
-    Task<Guid> ExecuteAsync(string name, CancellationToken cancellationToken = default);
+    Task<Result<Guid>> ExecuteAsync(string name, CancellationToken cancellationToken = default);
 }
 
 

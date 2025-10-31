@@ -1,11 +1,13 @@
+using FluentResults;
+
 namespace Core.Interfaces;
 
 public interface IGenericRepository<T> where T : class
 {
-    Task AddAsync(T entity, CancellationToken cancellationToken = default);
-    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
-    void Update(T entity);
-    Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Result> AddAsync(T entity, CancellationToken cancellationToken = default);
+    Task<Result> SaveChangesAsync(CancellationToken cancellationToken = default);
+    Result Update(T entity);
+    Task<Result<T>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 }
 
 

@@ -1,4 +1,5 @@
 using Application.Abstractions;
+using Application.Extensions;
 using CustomerWebApi.Controllers.Dto;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,8 +12,14 @@ public class CustomersController(ICreateCustomerUseCase createCustomerUseCase) :
     [HttpPost]
     public async Task<ActionResult<CreateCustomerResponseDto>> Create([FromBody] CreateCustomerRequestDto request, CancellationToken cancellationToken)
     {
-        var id = await createCustomerUseCase.ExecuteAsync(request.Name, cancellationToken);
-        return CreatedAtAction(nameof(Create), new { id }, new CreateCustomerResponseDto { Id = id });
+        var result = await createCustomerUseCase.ExecuteAsync(request.Name, cancellationToken);
+        
+        if (result.IsFailed)
+        {
+            return BadRequest(result.ToValidationProblemDetails());
+        }
+
+        return CreatedAtAction(nameof(Create), new { id = result.Value }, new CreateCustomerResponseDto { Id = result.Value });
     }
 }
 

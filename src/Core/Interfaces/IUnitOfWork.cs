@@ -1,14 +1,16 @@
+using FluentResults;
+
 namespace Core.Interfaces;
 
 public interface IUnitOfWork
 {
-    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
-    Task<IDatabaseTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
+    Task<Result> SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task<Result<IDatabaseTransaction>> BeginTransactionAsync(CancellationToken cancellationToken = default);
 }
 
 public interface IDatabaseTransaction : IAsyncDisposable
 {
-    Task CommitAsync(CancellationToken cancellationToken = default);
-    Task RollbackAsync(CancellationToken cancellationToken = default);
+    Task<Result> CommitAsync(CancellationToken cancellationToken = default);
+    Task<Result> RollbackAsync(CancellationToken cancellationToken = default);
 }
 

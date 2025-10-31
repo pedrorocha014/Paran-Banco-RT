@@ -1,6 +1,7 @@
 using Application.Abstractions;
 using Core.CustomerAggregate;
 using Core.Interfaces;
+using FluentResults;
 
 namespace Application.UseCases.Cards;
 
@@ -10,14 +11,20 @@ public class CreateCardUseCase(
     IUnitOfWork unitOfWork
     ) : ICreateCardUseCase
 {
-    public async Task<CreateCardResult> ExecuteAsync(Guid proposalId, decimal limit, CancellationToken cancellationToken = default)
+    public async Task<Result<CreateCardResult>> ExecuteAsync(Guid proposalId, decimal limit, CancellationToken cancellationToken = default)
     {
-        var proposal = await proposalRepository.GetByIdAsync(proposalId, cancellationToken) ?? 
-            throw new InvalidOperationException($"Proposal with id {proposalId} not found.");
+        var proposalResult = await proposalRepository.GetByIdAsync(proposalId, cancellationToken);
+        
+        if (proposalResult.IsFailed)
+        {
+            return Result.Fail(proposalResult.Errors);
+        }
+
+        var proposal = proposalResult.Value;
 
         if (proposal.Card != null)
         {
-            throw new InvalidOperationException($"A card already exists for proposal {proposalId}.");
+            return Result.Fail($"A card already exists for proposal {proposalId}.");
         }
 
         var now = DateTime.UtcNow;
@@ -31,24 +38,51 @@ public class CreateCardUseCase(
             UpdatedAt = now
         };
 
-        await using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
+        var transactionResult = await unitOfWork.BeginTransactionAsync(cancellationToken);
+        if (transactionResult.IsFailed)
+        {
+            return Result.Fail(transactionResult.Errors);
+        }
+
+        await using var transaction = transactionResult.Value;
+        
         try
         {
-            await cardRepository.AddAsync(card, cancellationToken);
+            var addCardResult = await cardRepository.AddAsync(card, cancellationToken);
+            if (addCardResult.IsFailed)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return Result.Fail(addCardResult.Errors);
+            }
 
             proposal.Status = ProposalStatus.Completed;
             proposal.UpdatedAt = now;
-            proposalRepository.Update(proposal);
+            var updateProposalResult = proposalRepository.Update(proposal);
+            if (updateProposalResult.IsFailed)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return Result.Fail(updateProposalResult.Errors);
+            }
 
-            await unitOfWork.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
+            var saveResult = await unitOfWork.SaveChangesAsync(cancellationToken);
+            if (saveResult.IsFailed)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return Result.Fail(saveResult.Errors);
+            }
 
-            return new CreateCardResult(card.Id, card.ProposalId, limit);
+            var commitResult = await transaction.CommitAsync(cancellationToken);
+            if (commitResult.IsFailed)
+            {
+                return Result.Fail(commitResult.Errors);
+            }
+
+            return Result.Ok(new CreateCardResult(card.Id, card.ProposalId, limit));
         }
-        catch
+        catch (Exception ex)
         {
             await transaction.RollbackAsync(cancellationToken);
-            throw;
+            return Result.Fail(ex.Message);
         }
     }
 }
