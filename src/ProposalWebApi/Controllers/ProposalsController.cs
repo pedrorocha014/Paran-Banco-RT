@@ -16,7 +16,7 @@ public class ProposalsController(ICreateProposalUseCase createProposalUseCase) :
         
         if (result.IsFailed)
         {
-            return BadRequest(result.ToValidationProblemDetails());
+            return UnprocessableEntity(result.ToValidationProblemDetails());
         }
 
         return CreatedAtAction(nameof(Create), new { id = result.Value.ProposalId }, new CreateProposalResponseDto 
