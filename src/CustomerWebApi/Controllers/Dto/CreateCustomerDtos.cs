@@ -1,11 +1,11 @@
 namespace CustomerWebApi.Controllers.Dto;
 
-public class CreateCustomerRequestDto
+public record CreateCustomerRequestDto
 {
     public string Name { get; set; } = string.Empty;
 }
 
-public class CreateCustomerResponseDto
+public record CreateCustomerResponseDto
 {
     public Guid Id { get; set; }
 }
