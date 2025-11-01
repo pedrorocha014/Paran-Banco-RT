@@ -16,7 +16,7 @@ public class CardsController(ICreateCardUseCase createCardUseCase) : ControllerB
         
         if (result.IsFailed)
         {
-            return BadRequest(result.ToValidationProblemDetails());
+            return UnprocessableEntity(result.ToValidationProblemDetails());
         }
 
         return CreatedAtAction(nameof(Create), new { id = result.Value.CardId }, new CreateCardResponseDto
