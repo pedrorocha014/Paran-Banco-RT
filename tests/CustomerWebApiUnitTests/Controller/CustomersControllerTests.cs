@@ -21,7 +21,7 @@ public class CustomersControllerTests
     }
 
     [Fact]
-    public async Task Create_WhenCreateCustomerWithSuccess_Return201WithId()
+    public async Task Create_WhenCreateCustomerWithSuccess_ShouldReturn201WithId()
     {
         // Arrange
         var requestDto = new CreateCustomerRequestDtoBuilder().Build();
@@ -49,7 +49,7 @@ public class CustomersControllerTests
     }
 
     [Fact]
-    public async Task Create_WhenCreateCustomerWithFail_Return422WithProblemDetails()
+    public async Task Create_WhenCreateCustomerWithFail_ShouldReturn422WithProblemDetails()
     {
         // Arrange
         var requestDto = new CreateCustomerRequestDtoBuilder().Build();
