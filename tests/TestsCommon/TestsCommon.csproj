@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Bogus" Version="35.6.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Core\Core.csproj" />
+    <ProjectReference Include="..\..\src\CustomerWebApi\CustomerWebApi.csproj" />
+    <ProjectReference Include="..\..\src\CardWebApi\CardWebApi.csproj" />
+    <ProjectReference Include="..\..\src\ProposalWebApi\ProposalWebApi.csproj" />
+  </ItemGroup>
+
+</Project>
