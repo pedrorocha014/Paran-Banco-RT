@@ -32,7 +32,7 @@ builder.Services.AddHttpClient("CardWebApi", client =>
 {
     client.BaseAddress = new Uri("https://localhost:44309");
     client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromMinutes(300);
+    client.Timeout = TimeSpan.FromSeconds(300);
 })
 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
 {
@@ -61,6 +61,28 @@ builder.Services.AddMassTransit(x =>
         cfg.ReceiveEndpoint(MessagingConstants.CustomerCreatedQueue, e =>
         {
             e.ConfigureConsumer<Worker.Consumers.CustomerCreatedConsumer>(context);
+            
+            // Configurar retry com exponential backoff
+            e.UseMessageRetry(r =>
+            {
+                r.Exponential(
+                    retryLimit: 5,
+                    minInterval: TimeSpan.FromSeconds(1),
+                    maxInterval: TimeSpan.FromSeconds(30),
+                    intervalDelta: TimeSpan.FromSeconds(2));
+                
+                r.Ignore<ArgumentException>();
+            });
+            
+            // Configurar DLQ após todos os retries falharem
+            e.UseDelayedRedelivery(r =>
+            {
+                r.Exponential(
+                    retryLimit: 3,
+                    minInterval: TimeSpan.FromMinutes(1),
+                    maxInterval: TimeSpan.FromMinutes(10),
+                    intervalDelta: TimeSpan.FromMinutes(2));
+            });
         });
 
         cfg.ReceiveEndpoint(MessagingConstants.ProposalApprovedQueue, e =>
