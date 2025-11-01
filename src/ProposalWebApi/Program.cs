@@ -68,3 +68,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+namespace ProposalWebApi
+{
+    public class Program;
+}

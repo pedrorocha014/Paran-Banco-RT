@@ -24,15 +24,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Itens de Solução", "Itens
 		solutionItems\compose.yaml = solutionItems\compose.yaml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CustomerWebApiUnitTests", "tests\CustomerWebApiUnitTests\CustomerWebApiUnitTests.csproj", "{3837D72F-679E-4DED-AFC7-DBF2EFD99E01}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CustomerWebApiUnitTests", "tests\CustomerWebApiUnitTests\CustomerWebApiUnitTests.csproj", "{3837D72F-679E-4DED-AFC7-DBF2EFD99E01}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestsCommon", "tests\TestsCommon\TestsCommon.csproj", "{746F9707-EDBC-4AA0-BA7A-FAEA6228FEE9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestsCommon", "tests\TestsCommon\TestsCommon.csproj", "{746F9707-EDBC-4AA0-BA7A-FAEA6228FEE9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProposalWebApiUnitTests", "tests\ProposalWebApiUnitTests\ProposalWebApiUnitTests.csproj", "{37E4AA20-0E2D-4CF2-BA0E-AA5CF6ACDF70}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProposalWebApiUnitTests", "tests\ProposalWebApiUnitTests\ProposalWebApiUnitTests.csproj", "{37E4AA20-0E2D-4CF2-BA0E-AA5CF6ACDF70}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{4A8E283A-6932-4D51-BED3-3503719CECD4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardWebApiUnitTests", "tests\CardWebApiUnitTests\CardWebApiUnitTests.csproj", "{37B80F93-CE1B-48FC-BC07-2139306078C2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CardWebApiUnitTests", "tests\CardWebApiUnitTests\CardWebApiUnitTests.csproj", "{37B80F93-CE1B-48FC-BC07-2139306078C2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationTests", "tests\IntegrationTests\IntegrationTests.csproj", "{E0CC531C-F7C3-4E65-85D0-67083F2D67E7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -84,6 +86,10 @@ Global
 		{37B80F93-CE1B-48FC-BC07-2139306078C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{37B80F93-CE1B-48FC-BC07-2139306078C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{37B80F93-CE1B-48FC-BC07-2139306078C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E0CC531C-F7C3-4E65-85D0-67083F2D67E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E0CC531C-F7C3-4E65-85D0-67083F2D67E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E0CC531C-F7C3-4E65-85D0-67083F2D67E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E0CC531C-F7C3-4E65-85D0-67083F2D67E7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -100,6 +106,7 @@ Global
 		{746F9707-EDBC-4AA0-BA7A-FAEA6228FEE9} = {4A8E283A-6932-4D51-BED3-3503719CECD4}
 		{37E4AA20-0E2D-4CF2-BA0E-AA5CF6ACDF70} = {4A8E283A-6932-4D51-BED3-3503719CECD4}
 		{37B80F93-CE1B-48FC-BC07-2139306078C2} = {4A8E283A-6932-4D51-BED3-3503719CECD4}
+		{E0CC531C-F7C3-4E65-85D0-67083F2D67E7} = {4A8E283A-6932-4D51-BED3-3503719CECD4}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {739766A6-82DC-4D0E-B626-04D442DC0C5E}

@@ -58,3 +58,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+namespace CustomerWebApi
+{
+    public class Program;
+}

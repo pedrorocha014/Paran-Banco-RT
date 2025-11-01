@@ -57,3 +57,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+namespace CardWebApi
+{
+    public class Program;
+}
