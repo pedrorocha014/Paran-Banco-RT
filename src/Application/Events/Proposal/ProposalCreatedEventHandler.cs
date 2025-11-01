@@ -1,4 +1,5 @@
-﻿using Core.CustomerAggregate;
+﻿using Application.Abstractions;
+using Core.CustomerAggregate;
 using Core.CustomerAggregate.Events;
 using Core.Interfaces;
 using Core.Messaging.Contracts;
@@ -10,12 +11,13 @@ namespace Application.Events.Proposal;
 
 public class ProposalCreatedEventHandler(
     IGenericRepository<Core.CustomerAggregate.Proposal> repository, 
-    ISendEndpointProvider sendEndpointProvider) : IEventHandler<ProposalCreatedEvent>
+    ISendEndpointProvider sendEndpointProvider,
+    IScoreCalculator scoreCalculator) : IEventHandler<ProposalCreatedEvent>
 {
     public async Task Handle(ProposalCreatedEvent @event, CancellationToken cancellationToken = default)
     {
         // Simula uma chamada externa para consultar o score
-        var score = await CalculateScoreAsync(); 
+        var score = await scoreCalculator.CalculateScoreAsync(cancellationToken); 
 
         @event.Proposal.EvaluateScore(score);
 
@@ -24,7 +26,7 @@ public class ProposalCreatedEventHandler(
         var saveResult = await repository.SaveChangesAsync(cancellationToken);
         if (saveResult.IsFailed)
         {
-            // Log error e não publica eventos  
+            // To Do: Adicionar uma tabela de error logs, por exemplo
             return;
         }
 
@@ -50,11 +52,5 @@ public class ProposalCreatedEventHandler(
                 await cardEndpoint.Send(new CardIssueRequested(@event.Proposal.Id, @event.Proposal.CustomerId, idempotencyKey, now), cancellationToken);
             }
         }
-    }
-
-    private static async Task<int> CalculateScoreAsync()
-    {
-        await Task.CompletedTask;
-        return Random.Shared.Next(0, 1001);
     }
 }

@@ -1,4 +1,5 @@
 using Application.Abstractions;
+using Application.Services;
 using Application.UseCases.Cards;
 using Application.UseCases.Customers;
 using Application.UseCases.Proposals;
@@ -13,6 +14,7 @@ public static class DependencyInjection
         services.AddScoped<ICreateCustomerUseCase, CreateCustomerUseCase>();
         services.AddScoped<ICreateProposalUseCase, CreateProposalUseCase>();
         services.AddScoped<ICreateCardUseCase, CreateCardUseCase>();
+        services.AddScoped<IScoreCalculator, ScoreCalculator>();
         return services;
     }
 }
