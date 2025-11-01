@@ -1,3 +1,4 @@
+using Application;
 using Core.Messaging;
 using Core.Messaging.Contracts;
 using Infrastructure;
@@ -13,6 +14,7 @@ using Worker.Resilience;
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication();
 
 // Configurar HttpClient para fazer chamadas à ProposalWebApi com políticas de resiliência
 builder.Services.AddHttpClient("ProposalWebApi", client =>
@@ -118,3 +120,8 @@ builder.Services.AddHostedService<Worker.Worker>();
 
 var host = builder.Build();
 host.Run();
+
+namespace Worker
+{
+    public class Program;
+}

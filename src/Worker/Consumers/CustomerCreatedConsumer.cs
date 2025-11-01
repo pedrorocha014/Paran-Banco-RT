@@ -27,7 +27,7 @@ public class CustomerCreatedConsumer : IConsumer<CustomerCreated>
             _logger.LogInformation("Processing customer created event for customer {CustomerId}", customerId);
 
             var httpClient = _httpClientFactory.CreateClient("ProposalWebApi");
-            var requestBody = new { customerId = customerId };
+            var requestBody = new { customerId };
             
             var response = await httpClient.PostAsJsonAsync("/api/proposals", requestBody, context.CancellationToken);
 
