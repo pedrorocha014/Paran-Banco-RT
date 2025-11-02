@@ -4,6 +4,7 @@ public class CreateCardRequestDto
 {
     public Guid ProposalId { get; set; }
     public decimal Limit { get; set; }
+    public int NumberOfCards { get; set; }
 }
 
 public class CreateCardResponseDto

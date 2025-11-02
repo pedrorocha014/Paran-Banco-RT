@@ -15,7 +15,7 @@ public class CardBuilder
             .RuleFor(x => x.Customer, _ => null!)
             .RuleFor(x => x.ProposalId, f => f.Random.Guid())
             .RuleFor(x => x.Proposal, _ => null!)
-            .RuleFor(x => x.Limite, f => f.Finance.Amount(100, 10000, 2))
+            .RuleFor(x => x.Limit, f => f.Finance.Amount(100, 10000, 2))
             .RuleFor(x => x.CreatedAt, f => f.Date.Past())
             .RuleFor(x => x.UpdatedAt, f => f.Date.Recent());
     }
@@ -57,9 +57,9 @@ public class CardBuilder
         return this;
     }
 
-    public CardBuilder WithLimite(decimal limite)
+    public CardBuilder WithLimite(decimal limit)
     {
-        _faker.RuleFor(x => x.Limite, _ => limite);
+        _faker.RuleFor(x => x.Limit, _ => limit);
         return this;
     }
 

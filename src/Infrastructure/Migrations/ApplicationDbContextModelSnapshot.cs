@@ -49,8 +49,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.HasIndex("ProposalId")
-                        .IsUnique();
+                    b.HasIndex("ProposalId");
 
                     b.ToTable("Cards", (string)null);
                 });
@@ -111,8 +110,8 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("Core.CustomerAggregate.Proposal", "Proposal")
-                        .WithOne("Card")
-                        .HasForeignKey("Core.CustomerAggregate.Card", "ProposalId")
+                        .WithMany("Cards")
+                        .HasForeignKey("ProposalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -141,7 +140,7 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Core.CustomerAggregate.Proposal", b =>
                 {
-                    b.Navigation("Card");
+                    b.Navigation("Cards");
                 });
 #pragma warning restore 612, 618
         }

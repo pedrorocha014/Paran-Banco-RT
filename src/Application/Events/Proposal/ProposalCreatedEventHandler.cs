@@ -19,7 +19,7 @@ public class ProposalCreatedEventHandler(
         // Simula uma chamada externa para consultar o score
         var score = await scoreCalculator.CalculateScoreAsync(cancellationToken); 
 
-        @event.Proposal.EvaluateScore(score);
+       @event.Proposal.EvaluateScore(score);
 
         repository.Update(@event.Proposal);
 

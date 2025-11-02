@@ -29,9 +29,9 @@ public class ProposalApprovedConsumer : IConsumer<ProposalApproved>
                 proposalId, numberOfCards);
 
             var httpClient = _httpClientFactory.CreateClient("CardWebApi");
-            var defaultLimit = numberOfCards == 2 ? 2000.00m : 1000.00m;
+            var defaultLimit = numberOfCards == 2 ? 5000.00m : 1000.00m;
 
-            var requestBody = new { ProposalId = proposalId, Limit = defaultLimit };
+            var requestBody = new { ProposalId = proposalId, Limit = defaultLimit, NumberOfCards = numberOfCards };
             
             var response = await httpClient.PostAsJsonAsync("/api/cards", requestBody, context.CancellationToken);
 

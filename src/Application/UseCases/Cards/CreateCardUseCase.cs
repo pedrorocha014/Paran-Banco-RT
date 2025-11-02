@@ -11,8 +11,13 @@ public class CreateCardUseCase(
     IUnitOfWork unitOfWork
     ) : ICreateCardUseCase
 {
-    public async Task<Result<CreateCardResult>> ExecuteAsync(Guid proposalId, decimal limit, CancellationToken cancellationToken = default)
+    public async Task<Result<CreateCardResult>> ExecuteAsync(Guid proposalId, decimal limit, int numberOfCards, CancellationToken cancellationToken = default)
     {
+        if (numberOfCards <= 0)
+        {
+            return Result.Fail("NumberOfCards must be greater than zero.");
+        }
+
         var proposalResult = await proposalRepository.GetByIdAsync(proposalId, cancellationToken);
         
         if (proposalResult.IsFailed)
@@ -22,22 +27,7 @@ public class CreateCardUseCase(
 
         var proposal = proposalResult.Value;
 
-        if (proposal.Card != null)
-        {
-            return Result.Fail($"A card already exists for proposal {proposalId}.");
-        }
-
         var now = DateTime.UtcNow;
-        var card = new Card
-        {
-            Id = Guid.NewGuid(),
-            CustomerId = proposal.CustomerId,
-            ProposalId = proposalId,
-            Limit = limit,
-            CreatedAt = now,
-            UpdatedAt = now
-        };
-
         var transactionResult = await unitOfWork.BeginTransactionAsync(cancellationToken);
         if (transactionResult.IsFailed)
         {
@@ -48,12 +38,31 @@ public class CreateCardUseCase(
         
         try
         {
-            var addCardResult = await cardRepository.AddAsync(card, cancellationToken);
-            if (addCardResult.IsFailed)
+            List<Card> cards = [];
+
+            for (int i = 0; i < numberOfCards; i++)
+            {
+                var card = new Card
+                {
+                    Id = Guid.NewGuid(),
+                    CustomerId = proposal.CustomerId,
+                    ProposalId = proposalId,
+                    Limit = limit,
+                    CreatedAt = now,
+                    UpdatedAt = now
+                };
+                
+                cards.Add(card);
+            }
+
+            var addRangeResult = await cardRepository.AddRangeAsync(cards, cancellationToken);
+            if (addRangeResult.IsFailed)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                return Result.Fail(addCardResult.Errors);
+                return Result.Fail(addRangeResult.Errors);
             }
+
+            await unitOfWork.SaveChangesAsync(cancellationToken);
 
             proposal.Status = ProposalStatus.Completed;
             proposal.UpdatedAt = now;
@@ -64,12 +73,7 @@ public class CreateCardUseCase(
                 return Result.Fail(updateProposalResult.Errors);
             }
 
-            var saveResult = await unitOfWork.SaveChangesAsync(cancellationToken);
-            if (saveResult.IsFailed)
-            {
-                await transaction.RollbackAsync(cancellationToken);
-                return Result.Fail(saveResult.Errors);
-            }
+            await unitOfWork.SaveChangesAsync(cancellationToken);
 
             var commitResult = await transaction.CommitAsync(cancellationToken);
             if (commitResult.IsFailed)
@@ -77,12 +81,14 @@ public class CreateCardUseCase(
                 return Result.Fail(commitResult.Errors);
             }
 
-            return Result.Ok(new CreateCardResult(card.Id, card.ProposalId, limit));
+            var firstCard = cards.First();
+            return Result.Ok(new CreateCardResult(firstCard.Id, firstCard.ProposalId, limit));
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync(cancellationToken);
-            return Result.Fail(ex.Message);
+            
+            return Result.Fail($"Unexpected error creating {numberOfCards} card(s) for proposal {proposalId}. {ex}");
         }
     }
 }

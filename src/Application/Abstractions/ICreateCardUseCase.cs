@@ -4,7 +4,7 @@ namespace Application.Abstractions;
 
 public interface ICreateCardUseCase
 {
-    Task<Result<CreateCardResult>> ExecuteAsync(Guid proposalId, decimal limit, CancellationToken cancellationToken = default);
+    Task<Result<CreateCardResult>> ExecuteAsync(Guid proposalId, decimal limit, int numberOfCards, CancellationToken cancellationToken = default);
 }
 
 public record CreateCardResult(Guid CardId, Guid ProposalId, decimal Limit);

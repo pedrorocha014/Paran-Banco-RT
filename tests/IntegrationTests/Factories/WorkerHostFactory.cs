@@ -136,8 +136,6 @@ public class WorkerHostFactory : IAsyncDisposable
             });
         });
 
-        builder.Services.AddHostedService<Worker.Worker>();
-
         _host = builder.Build();
     }
 

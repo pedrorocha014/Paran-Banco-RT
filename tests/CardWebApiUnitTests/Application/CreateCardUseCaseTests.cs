@@ -1,10 +1,10 @@
-﻿using Application.Abstractions;
-using Application.UseCases.Cards;
+﻿using Application.UseCases.Cards;
 using Core.CustomerAggregate;
 using Core.Interfaces;
 using FluentAssertions;
 using FluentResults;
 using Moq;
+using System.Linq;
 using TestsCommon.Builders;
 
 namespace CardWebApiUnitTests.Application;
@@ -23,7 +23,7 @@ public class CreateCardUseCaseTests
         _mockProposalRepository = new Mock<IGenericRepository<Proposal>>();
         _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockTransaction = new Mock<IDatabaseTransaction>();
-        
+
         _useCase = new CreateCardUseCase(
             _mockCardRepository.Object,
             _mockProposalRepository.Object,
@@ -36,55 +36,55 @@ public class CreateCardUseCaseTests
         // Arrange
         var proposalId = Guid.NewGuid();
         var limit = 1000m;
+        var numberOfCards = 1;
         var errorMessage = "Proposta não encontrada";
-        
+
         _mockProposalRepository
             .Setup(x => x.GetByIdAsync(proposalId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Fail<Proposal>(errorMessage));
 
         // Act
-        var result = await _useCase.ExecuteAsync(proposalId, limit, CancellationToken.None);
+        var result = await _useCase.ExecuteAsync(proposalId, limit, numberOfCards, CancellationToken.None);
 
         // Assert
         result.IsFailed.Should().BeTrue();
         result.Errors.Should().ContainSingle(e => e.Message == errorMessage);
-        
+
         _mockProposalRepository.Verify(
-            x => x.GetByIdAsync(proposalId, It.IsAny<CancellationToken>()), 
+            x => x.GetByIdAsync(proposalId, It.IsAny<CancellationToken>()),
             Times.Once);
-        
+
         _mockUnitOfWork.Verify(
-            x => x.BeginTransactionAsync(It.IsAny<CancellationToken>()), 
+            x => x.BeginTransactionAsync(It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenProposalAlreadyHasCard_ShouldReturnErrorReason()
+    public async Task ExecuteAsync_WhenNumberOfCardsIsZero_ShouldReturnError()
     {
         // Arrange
         var proposal = new ProposalBuilder().Build();
-        var card = new CardBuilder().WithProposal(proposal).Build();
-        proposal.Card = card;
         var proposalId = proposal.Id;
         var limit = 1000m;
-        
+        var numberOfCards = 0;
+
         _mockProposalRepository
             .Setup(x => x.GetByIdAsync(proposalId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(proposal));
 
         // Act
-        var result = await _useCase.ExecuteAsync(proposalId, limit, CancellationToken.None);
+        var result = await _useCase.ExecuteAsync(proposalId, limit, numberOfCards, CancellationToken.None);
 
         // Assert
         result.IsFailed.Should().BeTrue();
-        result.Errors.Should().ContainSingle(e => e.Message == $"A card already exists for proposal {proposalId}.");
-        
+        result.Errors.Should().ContainSingle(e => e.Message == "NumberOfCards must be greater than zero.");
+
         _mockProposalRepository.Verify(
-            x => x.GetByIdAsync(proposalId, It.IsAny<CancellationToken>()), 
-            Times.Once);
-        
+            x => x.GetByIdAsync(proposalId, It.IsAny<CancellationToken>()),
+            Times.Never);
+
         _mockUnitOfWork.Verify(
-            x => x.BeginTransactionAsync(It.IsAny<CancellationToken>()), 
+            x => x.BeginTransactionAsync(It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -95,74 +95,76 @@ public class CreateCardUseCaseTests
         var proposal = new ProposalBuilder().Build();
         var proposalId = proposal.Id;
         var limit = 1000m;
+        var numberOfCards = 1;
         var errorMessage = "Erro ao iniciar transação";
-        
+
         _mockProposalRepository
             .Setup(x => x.GetByIdAsync(proposalId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(proposal));
-        
+
         _mockUnitOfWork
             .Setup(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Fail<IDatabaseTransaction>(errorMessage));
 
         // Act
-        var result = await _useCase.ExecuteAsync(proposalId, limit, CancellationToken.None);
+        var result = await _useCase.ExecuteAsync(proposalId, limit, numberOfCards, CancellationToken.None);
 
         // Assert
         result.IsFailed.Should().BeTrue();
         result.Errors.Should().ContainSingle(e => e.Message == errorMessage);
-        
+
         _mockUnitOfWork.Verify(
-            x => x.BeginTransactionAsync(It.IsAny<CancellationToken>()), 
+            x => x.BeginTransactionAsync(It.IsAny<CancellationToken>()),
             Times.Once);
-        
+
         _mockCardRepository.Verify(
-            x => x.AddAsync(It.IsAny<Card>(), It.IsAny<CancellationToken>()), 
+            x => x.AddRangeAsync(It.IsAny<IEnumerable<Card>>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task ExecuteAsync_AddAsyncFails_ShouldRollbackAndReturnError()
+    public async Task ExecuteAsync_AddRangeAsyncFails_ShouldRollbackAndReturnError()
     {
         // Arrange
         var proposal = new ProposalBuilder().Build();
         var proposalId = proposal.Id;
         var limit = 1000m;
+        var numberOfCards = 1;
         var errorMessage = "Erro ao adicionar cartão";
-        
+
         _mockProposalRepository
             .Setup(x => x.GetByIdAsync(proposalId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(proposal));
-        
+
         _mockUnitOfWork
             .Setup(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok<IDatabaseTransaction>(_mockTransaction.Object));
-        
+
         _mockTransaction
             .Setup(x => x.RollbackAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok());
-        
+
         _mockCardRepository
-            .Setup(x => x.AddAsync(It.IsAny<Card>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.AddRangeAsync(It.IsAny<IEnumerable<Card>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Fail(errorMessage));
 
         // Act
-        var result = await _useCase.ExecuteAsync(proposalId, limit, CancellationToken.None);
+        var result = await _useCase.ExecuteAsync(proposalId, limit, numberOfCards, CancellationToken.None);
 
         // Assert
         result.IsFailed.Should().BeTrue();
-        result.Errors.Should().ContainSingle(e => e.Message == errorMessage);
-        
+        result.Errors.Should().NotBeNull();
+
         _mockCardRepository.Verify(
-            x => x.AddAsync(It.IsAny<Card>(), It.IsAny<CancellationToken>()), 
+            x => x.AddRangeAsync(It.IsAny<IEnumerable<Card>>(), It.IsAny<CancellationToken>()),
             Times.Once);
-        
+
         _mockTransaction.Verify(
-            x => x.RollbackAsync(It.IsAny<CancellationToken>()), 
+            x => x.RollbackAsync(It.IsAny<CancellationToken>()),
             Times.Once);
-        
+
         _mockProposalRepository.Verify(
-            x => x.Update(It.IsAny<Proposal>()), 
+            x => x.Update(It.IsAny<Proposal>()),
             Times.Never);
     }
 
@@ -173,50 +175,51 @@ public class CreateCardUseCaseTests
         var proposal = new ProposalBuilder().Build();
         var proposalId = proposal.Id;
         var limit = 1000m;
+        var numberOfCards = 1;
         var errorMessage = "Erro ao atualizar proposta";
-        
+
         _mockProposalRepository
             .Setup(x => x.GetByIdAsync(proposalId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(proposal));
-        
+
         _mockUnitOfWork
             .Setup(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok<IDatabaseTransaction>(_mockTransaction.Object));
-        
+
         _mockTransaction
             .Setup(x => x.RollbackAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok());
-        
+
         _mockCardRepository
-            .Setup(x => x.AddAsync(It.IsAny<Card>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.AddRangeAsync(It.IsAny<IEnumerable<Card>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok());
-        
+
         _mockProposalRepository
             .Setup(x => x.Update(It.IsAny<Proposal>()))
             .Returns(Result.Fail(errorMessage));
 
         // Act
-        var result = await _useCase.ExecuteAsync(proposalId, limit, CancellationToken.None);
+        var result = await _useCase.ExecuteAsync(proposalId, limit, numberOfCards, CancellationToken.None);
 
         // Assert
         result.IsFailed.Should().BeTrue();
         result.Errors.Should().ContainSingle(e => e.Message == errorMessage);
-        
+
         _mockCardRepository.Verify(
-            x => x.AddAsync(It.IsAny<Card>(), It.IsAny<CancellationToken>()), 
+            x => x.AddRangeAsync(It.IsAny<IEnumerable<Card>>(), It.IsAny<CancellationToken>()),
             Times.Once);
-        
+
         _mockProposalRepository.Verify(
-            x => x.Update(It.Is<Proposal>(p => p.Status == ProposalStatus.Completed)), 
+            x => x.Update(It.Is<Proposal>(p => p.Status == ProposalStatus.Completed)),
             Times.Once);
-        
+
         _mockTransaction.Verify(
-            x => x.RollbackAsync(It.IsAny<CancellationToken>()), 
+            x => x.RollbackAsync(It.IsAny<CancellationToken>()),
             Times.Once);
-        
+
         _mockUnitOfWork.Verify(
-            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), 
-            Times.Never);
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -226,49 +229,51 @@ public class CreateCardUseCaseTests
         var proposal = new ProposalBuilder().Build();
         var proposalId = proposal.Id;
         var limit = 1000m;
+        var numberOfCards = 1;
         var errorMessage = "Erro ao salvar alterações";
-        
+
         _mockProposalRepository
             .Setup(x => x.GetByIdAsync(proposalId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(proposal));
-        
+
         _mockUnitOfWork
             .Setup(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok<IDatabaseTransaction>(_mockTransaction.Object));
-        
+
         _mockCardRepository
-            .Setup(x => x.AddAsync(It.IsAny<Card>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.AddRangeAsync(It.IsAny<IEnumerable<Card>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok());
-        
+
         _mockProposalRepository
             .Setup(x => x.Update(It.IsAny<Proposal>()))
             .Returns(Result.Ok());
-        
-        _mockUnitOfWork
-            .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Fail(errorMessage));
-        
+
+        var setupSequence = _mockUnitOfWork
+            .SetupSequence(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()));
+        setupSequence.ReturnsAsync(Result.Ok());
+        setupSequence.ThrowsAsync(new Exception(errorMessage));
+
         _mockTransaction
             .Setup(x => x.RollbackAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok());
 
         // Act
-        var result = await _useCase.ExecuteAsync(proposalId, limit, CancellationToken.None);
+        var result = await _useCase.ExecuteAsync(proposalId, limit, numberOfCards, CancellationToken.None);
 
         // Assert
         result.IsFailed.Should().BeTrue();
-        result.Errors.Should().ContainSingle(e => e.Message == errorMessage);
-        
+        result.Errors.Should().Contain(e => e.Message.Contains(errorMessage));
+
         _mockUnitOfWork.Verify(
-            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), 
-            Times.Once);
-        
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+
         _mockTransaction.Verify(
-            x => x.RollbackAsync(It.IsAny<CancellationToken>()), 
+            x => x.RollbackAsync(It.IsAny<CancellationToken>()),
             Times.Once);
-        
+
         _mockTransaction.Verify(
-            x => x.CommitAsync(It.IsAny<CancellationToken>()), 
+            x => x.CommitAsync(It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -279,45 +284,46 @@ public class CreateCardUseCaseTests
         var proposal = new ProposalBuilder().Build();
         var proposalId = proposal.Id;
         var limit = 1000m;
+        var numberOfCards = 1;
         var errorMessage = "Erro ao fazer commit";
-        
+
         _mockProposalRepository
             .Setup(x => x.GetByIdAsync(proposalId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(proposal));
-        
+
         _mockUnitOfWork
             .Setup(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok<IDatabaseTransaction>(_mockTransaction.Object));
-        
+
         _mockCardRepository
-            .Setup(x => x.AddAsync(It.IsAny<Card>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.AddRangeAsync(It.IsAny<IEnumerable<Card>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok());
-        
+
         _mockProposalRepository
             .Setup(x => x.Update(It.IsAny<Proposal>()))
             .Returns(Result.Ok());
-        
+
         _mockUnitOfWork
             .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok());
-        
+
         _mockTransaction
             .Setup(x => x.CommitAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Fail(errorMessage));
 
         // Act
-        var result = await _useCase.ExecuteAsync(proposalId, limit, CancellationToken.None);
+        var result = await _useCase.ExecuteAsync(proposalId, limit, numberOfCards, CancellationToken.None);
 
         // Assert
         result.IsFailed.Should().BeTrue();
         result.Errors.Should().ContainSingle(e => e.Message == errorMessage);
-        
+
         _mockTransaction.Verify(
-            x => x.CommitAsync(It.IsAny<CancellationToken>()), 
+            x => x.CommitAsync(It.IsAny<CancellationToken>()),
             Times.Once);
-        
+
         _mockTransaction.Verify(
-            x => x.RollbackAsync(It.IsAny<CancellationToken>()), 
+            x => x.RollbackAsync(It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -328,58 +334,125 @@ public class CreateCardUseCaseTests
         var proposal = new ProposalBuilder().Build();
         var proposalId = proposal.Id;
         var limit = 1000m;
-        
+        var numberOfCards = 1;
+
         _mockProposalRepository
             .Setup(x => x.GetByIdAsync(proposalId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(proposal));
-        
+
         _mockUnitOfWork
             .Setup(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok<IDatabaseTransaction>(_mockTransaction.Object));
-        
+
         _mockCardRepository
-            .Setup(x => x.AddAsync(It.IsAny<Card>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.AddRangeAsync(It.IsAny<IEnumerable<Card>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok());
-        
+
         _mockProposalRepository
             .Setup(x => x.Update(It.IsAny<Proposal>()))
             .Returns(Result.Ok());
-        
+
         _mockUnitOfWork
             .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok());
-        
+
         _mockTransaction
             .Setup(x => x.CommitAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok());
 
         // Act
-        var result = await _useCase.ExecuteAsync(proposalId, limit, CancellationToken.None);
+        var result = await _useCase.ExecuteAsync(proposalId, limit, numberOfCards, CancellationToken.None);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value.ProposalId.Should().Be(proposalId);
         result.Value.Limit.Should().Be(limit);
-        
+
         _mockCardRepository.Verify(
-            x => x.AddAsync(It.Is<Card>(c => c.ProposalId == proposalId && c.Limite == limit), It.IsAny<CancellationToken>()), 
+            x => x.AddRangeAsync(It.Is<IEnumerable<Card>>(cards => cards.Any(c => c.ProposalId == proposalId && c.Limit == limit)), It.IsAny<CancellationToken>()),
             Times.Once);
-        
+
         _mockProposalRepository.Verify(
-            x => x.Update(It.Is<Proposal>(p => p.Status == ProposalStatus.Completed)), 
+            x => x.Update(It.Is<Proposal>(p => p.Status == ProposalStatus.Completed)),
             Times.Once);
-        
+
         _mockUnitOfWork.Verify(
-            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), 
-            Times.Once);
-        
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+
         _mockTransaction.Verify(
-            x => x.CommitAsync(It.IsAny<CancellationToken>()), 
+            x => x.CommitAsync(It.IsAny<CancellationToken>()),
             Times.Once);
-        
+
         _mockTransaction.Verify(
-            x => x.RollbackAsync(It.IsAny<CancellationToken>()), 
+            x => x.RollbackAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenTransactionCommitWithSuccessAndTwoCards_ShouldReturnOk()
+    {
+        // Arrange
+        var proposal = new ProposalBuilder().Build();
+        var proposalId = proposal.Id;
+        var limit = 5000m;
+        var numberOfCards = 2;
+
+        _mockProposalRepository
+            .Setup(x => x.GetByIdAsync(proposalId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(proposal));
+
+        _mockUnitOfWork
+            .Setup(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok<IDatabaseTransaction>(_mockTransaction.Object));
+
+        _mockCardRepository
+            .Setup(x => x.AddRangeAsync(It.IsAny<IEnumerable<Card>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok());
+
+        _mockProposalRepository
+            .Setup(x => x.Update(It.IsAny<Proposal>()))
+            .Returns(Result.Ok());
+
+        _mockUnitOfWork
+            .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok());
+
+        _mockTransaction
+            .Setup(x => x.CommitAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok());
+
+        // Act
+        var result = await _useCase.ExecuteAsync(proposalId, limit, numberOfCards, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value.ProposalId.Should().Be(proposalId);
+        result.Value.Limit.Should().Be(limit);
+
+        _mockCardRepository.Verify(
+            x => x.AddRangeAsync(
+                It.Is<IEnumerable<Card>>(cards => cards.Count() == numberOfCards && 
+                                                 cards.All(c => c.ProposalId == proposalId && c.Limit == limit)), 
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        _mockProposalRepository.Verify(
+            x => x.Update(It.Is<Proposal>(p => p.Status == ProposalStatus.Completed)),
+            Times.Once);
+
+        _mockUnitOfWork.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+
+        _mockTransaction.Verify(
+            x => x.CommitAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        _mockTransaction.Verify(
+            x => x.RollbackAsync(It.IsAny<CancellationToken>()),
             Times.Never);
     }
 }

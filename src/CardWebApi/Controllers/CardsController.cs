@@ -12,7 +12,8 @@ public class CardsController(ICreateCardUseCase createCardUseCase) : ControllerB
     [HttpPost]
     public async Task<ActionResult<CreateCardResponseDto>> Create([FromBody] CreateCardRequestDto request, CancellationToken cancellationToken)
     {
-        var result = await createCardUseCase.ExecuteAsync(request.ProposalId, request.Limit, cancellationToken);
+        var result = await createCardUseCase
+            .ExecuteAsync(request.ProposalId, request.Limit, request.NumberOfCards, cancellationToken);
         
         if (result.IsFailed)
         {

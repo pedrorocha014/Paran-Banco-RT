@@ -26,9 +26,9 @@ public class CardsControllerTests
         // Arrange
         var requestDto = new CreateCardRequestDtoBuilder().Build();
         var errorMessage = "Erro ao criar cartão";
-        
+
         _mockCreateCardUseCase
-            .Setup(x => x.ExecuteAsync(requestDto.ProposalId, requestDto.Limit, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ExecuteAsync(requestDto.ProposalId, requestDto.Limit, requestDto.NumberOfCards, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Fail<CreateCardResult>(errorMessage));
 
         // Act
@@ -43,9 +43,9 @@ public class CardsControllerTests
         var problemDetails = unprocessableEntityResult.Value.As<ValidationProblemDetails>();
         problemDetails.Should().NotBeNull();
         problemDetails.Errors.Should().ContainKey("errors");
-        
+
         _mockCreateCardUseCase.Verify(
-            x => x.ExecuteAsync(requestDto.ProposalId, requestDto.Limit, It.IsAny<CancellationToken>()), 
+            x => x.ExecuteAsync(requestDto.ProposalId, requestDto.Limit, requestDto.NumberOfCards, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -57,11 +57,11 @@ public class CardsControllerTests
         var cardId = Guid.NewGuid();
         var proposalId = requestDto.ProposalId;
         var limit = requestDto.Limit;
-        
+
         var createCardResult = new CreateCardResult(cardId, proposalId, limit);
-        
+
         _mockCreateCardUseCase
-            .Setup(x => x.ExecuteAsync(requestDto.ProposalId, requestDto.Limit, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ExecuteAsync(requestDto.ProposalId, requestDto.Limit, requestDto.NumberOfCards, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok(createCardResult));
 
         // Act
@@ -71,15 +71,15 @@ public class CardsControllerTests
         result.Result.Should().BeOfType<CreatedAtActionResult>();
         var createdAtActionResult = result.Result.As<CreatedAtActionResult>();
         createdAtActionResult.StatusCode.Should().Be(201);
-        
+
         createdAtActionResult.Value.Should().BeOfType<CreateCardResponseDto>();
         var responseDto = createdAtActionResult.Value.As<CreateCardResponseDto>();
         responseDto.Id.Should().Be(cardId);
         responseDto.ProposalId.Should().Be(proposalId);
         responseDto.Limit.Should().Be(limit);
-        
+
         _mockCreateCardUseCase.Verify(
-            x => x.ExecuteAsync(requestDto.ProposalId, requestDto.Limit, It.IsAny<CancellationToken>()), 
+            x => x.ExecuteAsync(requestDto.ProposalId, requestDto.Limit, requestDto.NumberOfCards, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }

@@ -25,8 +25,7 @@ namespace Infrastructure.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Cards_ProposalId",
                 table: "Cards",
-                column: "ProposalId",
-                unique: true);
+                column: "ProposalId");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Cards_Proposals_ProposalId",

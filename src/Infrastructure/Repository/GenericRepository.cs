@@ -25,6 +25,19 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
         }
     }
 
+    public async Task<Result> AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await _dbContext.Set<T>().AddRangeAsync(entities, cancellationToken);
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail(ex.Message);
+        }
+    }
+
     public async Task<Result> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         try

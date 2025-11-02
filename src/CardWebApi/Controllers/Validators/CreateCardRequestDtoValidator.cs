@@ -14,6 +14,10 @@ public class CreateCardRequestDtoValidator : AbstractValidator<CreateCardRequest
         RuleFor(x => x.Limit)
             .GreaterThan(0)
             .WithMessage("Limit must be greater than zero.");
+
+        RuleFor(x => x.NumberOfCards)
+            .GreaterThan(0)
+            .WithMessage("NumberOfCards must be greater than zero.");
     }
 }
 

@@ -61,10 +61,10 @@ public class ApplicationDbContext : DbContext
 
             entity.HasIndex(e => e.CustomerId);
 
-            // Relacionamento 1:1 com Card
-            entity.HasOne(p => p.Card)
+            // Relacionamento 1:N com Card
+            entity.HasMany(p => p.Cards)
                 .WithOne(c => c.Proposal)
-                .HasForeignKey<Card>(c => c.ProposalId)
+                .HasForeignKey(c => c.ProposalId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -87,8 +87,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.UpdatedAt);
 
             entity.HasIndex(e => e.CustomerId);
-            entity.HasIndex(e => e.ProposalId)
-                .IsUnique();
+            entity.HasIndex(e => e.ProposalId);
         });
     }
 }

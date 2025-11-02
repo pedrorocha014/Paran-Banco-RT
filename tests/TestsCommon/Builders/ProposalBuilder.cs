@@ -14,7 +14,7 @@ public class ProposalBuilder
             .RuleFor(x => x.CustomerId, f => f.Random.Guid())
             .RuleFor(x => x.Customer, _ => null!)
             .RuleFor(x => x.Status, f => f.PickRandom<ProposalStatus>())
-            .RuleFor(x => x.Card, _ => null)
+            .RuleFor(x => x.Cards, _ => [])
             .RuleFor(x => x.CreatedAt, f => f.Date.Past())
             .RuleFor(x => x.UpdatedAt, f => f.Date.Recent())
             .RuleFor(x => x.NumberOfCardsAllowed, 0);
@@ -47,12 +47,6 @@ public class ProposalBuilder
     public ProposalBuilder WithStatus(ProposalStatus status)
     {
         _faker.RuleFor(x => x.Status, _ => status);
-        return this;
-    }
-
-    public ProposalBuilder WithCard(Card? card)
-    {
-        _faker.RuleFor(x => x.Card, _ => card);
         return this;
     }
 
