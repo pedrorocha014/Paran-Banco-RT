@@ -7,7 +7,7 @@ public class Card
     public Customer Customer { get; set; } = null!;
     public Guid ProposalId { get; set; }
     public Proposal Proposal { get; set; } = null!;
-    public decimal Limite { get; set; }
+    public decimal Limit { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }

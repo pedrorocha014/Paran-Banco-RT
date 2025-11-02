@@ -33,7 +33,7 @@ public class CreateCardUseCase(
             Id = Guid.NewGuid(),
             CustomerId = proposal.CustomerId,
             ProposalId = proposalId,
-            Limite = limit,
+            Limit = limit,
             CreatedAt = now,
             UpdatedAt = now
         };

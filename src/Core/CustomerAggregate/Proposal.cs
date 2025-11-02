@@ -25,7 +25,7 @@ public class Proposal
         {
             >= 0 and <= 100 => (ProposalStatus.Denied, 0),
             >= 101 and <= 500 => (ProposalStatus.Approved, 1),
-            >= 501 and <= 1000 => (ProposalStatus.Approved, 2),
+            >= 501 => (ProposalStatus.Approved, 2),
             _ => (ProposalStatus.Denied, 0)
         };
 

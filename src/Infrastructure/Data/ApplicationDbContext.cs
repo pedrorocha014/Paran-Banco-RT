@@ -79,7 +79,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.ProposalId)
                 .IsRequired();
 
-            entity.Property(e => e.Limite)
+            entity.Property(e => e.Limit)
                 .IsRequired()
                 .HasColumnType("decimal(18,2)");
 

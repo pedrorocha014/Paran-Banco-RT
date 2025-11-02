@@ -11,7 +11,7 @@ public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Applicati
     {
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
 
-        var connectionString = Environment.GetEnvironmentVariable("DEFAULT_CONNECTION")
+        var connectionString = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION")
                                ?? "Host=localhost;Port=5432;Database=parana_banco_rt_db;Username=postgres;Password=postgres";
 
         optionsBuilder.UseNpgsql(connectionString, npgsqlOptions =>
