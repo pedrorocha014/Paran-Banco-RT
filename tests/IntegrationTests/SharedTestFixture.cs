@@ -26,7 +26,7 @@ public class SharedTestFixture : IAsyncLifetime, IDisposable
     public async Task InitializeAsync()
     {
         var postgresConnectionString = PostgresHelper.ConnectionString;
-        var rabbitMqConnectionString = $"amqp://localhost:5672/";
+        var rabbitMqConnectionString = $"amqp://localhost:5673/";
 
         _customerApiFactory = new CustomerWebApiFactory(postgresConnectionString, rabbitMqConnectionString);
         _proposalApiFactory = new ProposalWebApiFactory(postgresConnectionString, rabbitMqConnectionString);

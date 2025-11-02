@@ -13,7 +13,7 @@ public static class PostgresHelper
     public static ApplicationDbContext? Context { get; private set; }
 
         public static string ConnectionString { get; private set; } =
-        "Host=localhost;Port=5432;Database=parana_banco_rt_db;Username=postgres;Password=postgres";
+        "Host=localhost;Port=5433;Database=parana_banco_rt_db;Username=postgres;Password=postgres";
 
     public static void SetConnectionString(string connectionString)
     {

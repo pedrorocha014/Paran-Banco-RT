@@ -1,36 +1,79 @@
 version: '3.8'
 
+x-postgres-config: &postgres-config
+  image: postgres:16
+  environment:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_DB: parana_banco_rt_db
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U postgres"]
+    interval: 5s
+    timeout: 5s
+    retries: 5
+
+x-rabbitmq-config: &rabbitmq-config
+  image: rabbitmq:3.13-management
+  environment:
+    RABBITMQ_DEFAULT_USER: guest
+    RABBITMQ_DEFAULT_PASS: guest
+  healthcheck:
+    test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+    interval: 5s
+    timeout: 5s
+    retries: 10
+
+x-rabbitmq-setup-command-essentials: &rabbitmq-setup-command-essentials
+  'until curl -s -u guest:guest http://rabbitmq:15672/api/healthchecks/node; do echo waiting for rabbitmq; sleep 2; done;
+  curl -s -u guest:guest -H "content-type:application/json" -X PUT \
+    http://rabbitmq:15672/api/queues/%2F/customer.created \
+    -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "customer.created queue created";
+  curl -s -u guest:guest -H "content-type:application/json" -X PUT \
+    http://rabbitmq:15672/api/queues/%2F/proposal.denied \
+    -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "proposal.denied queue created";
+  curl -s -u guest:guest -H "content-type:application/json" -X PUT \
+    http://rabbitmq:15672/api/queues/%2F/proposal.approved \
+    -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "proposal.approved queue created";
+  curl -s -u guest:guest -H "content-type:application/json" -X PUT \
+    http://rabbitmq:15672/api/queues/%2F/card.issue.requested \
+    -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "card.issue.requested queue created";
+  curl -s -u guest:guest -H "content-type:application/json" -X PUT \
+    http://rabbitmq:15672/api/queues/%2F/created.consumer.dlq \
+    -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "created.consumer.dlq queue created"'
+
+x-rabbitmq-setup-command-testing: &rabbitmq-setup-command-testing
+  'until curl -s -u guest:guest http://rabbitmq-test:15672/api/healthchecks/node; do echo waiting for rabbitmq; sleep 2; done;
+  curl -s -u guest:guest -H "content-type:application/json" -X PUT \
+    http://rabbitmq-test:15672/api/queues/%2F/customer.created \
+    -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "customer.created queue created";
+  curl -s -u guest:guest -H "content-type:application/json" -X PUT \
+    http://rabbitmq-test:15672/api/queues/%2F/proposal.denied \
+    -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "proposal.denied queue created";
+  curl -s -u guest:guest -H "content-type:application/json" -X PUT \
+    http://rabbitmq-test:15672/api/queues/%2F/proposal.approved \
+    -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "proposal.approved queue created";
+  curl -s -u guest:guest -H "content-type:application/json" -X PUT \
+    http://rabbitmq-test:15672/api/queues/%2F/card.issue.requested \
+    -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "card.issue.requested queue created";
+  curl -s -u guest:guest -H "content-type:application/json" -X PUT \
+    http://rabbitmq-test:15672/api/queues/%2F/created.consumer.dlq \
+    -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "created.consumer.dlq queue created"'
+
 services:
+  # Essentials profile services
   postgres:
-    image: postgres:16
+    <<: *postgres-config
     container_name: parana_banco_rt_db
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: parana_banco_rt_db
     ports:
       - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
     profiles: ["essentials"]
 
   rabbitmq:
-    image: rabbitmq:3.13-management
+    <<: *rabbitmq-config
     container_name: parana_banco_rt_rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
     ports:
       - "5672:5672"    # AMQP
       - "15672:15672"  # Management UI
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
     profiles: ["essentials"]
 
   rabbitmq-setup:
@@ -40,21 +83,31 @@ services:
       rabbitmq:
         condition: service_healthy
     entrypoint: ["sh", "-c"]
-    command: >-
-      'until curl -s -u guest:guest http://rabbitmq:15672/api/healthchecks/node; do echo waiting for rabbitmq; sleep 2; done;
-      curl -s -u guest:guest -H "content-type:application/json" -X PUT \
-        http://rabbitmq:15672/api/queues/%2F/customer.created \
-        -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "customer.created queue created";
-      curl -s -u guest:guest -H "content-type:application/json" -X PUT \
-        http://rabbitmq:15672/api/queues/%2F/proposal.denied \
-        -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "proposal.denied queue created";
-      curl -s -u guest:guest -H "content-type:application/json" -X PUT \
-        http://rabbitmq:15672/api/queues/%2F/proposal.approved \
-        -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "proposal.approved queue created";
-      curl -s -u guest:guest -H "content-type:application/json" -X PUT \
-        http://rabbitmq:15672/api/queues/%2F/card.issue.requested \
-        -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "card.issue.requested queue created";
-      curl -s -u guest:guest -H "content-type:application/json" -X PUT \
-        http://rabbitmq:15672/api/queues/%2F/created.consumer.dlq \
-        -d "{\"auto_delete\":false,\"durable\":true,\"arguments\":{}}" && echo "created.consumer.dlq queue created"'
+    command: *rabbitmq-setup-command-essentials
     profiles: ["essentials"]
+
+  # Testing profile services
+  postgres-test:
+    <<: *postgres-config
+    container_name: parana_banco_rt_db_test
+    ports:
+      - "5433:5432"
+    profiles: ["testing"]
+
+  rabbitmq-test:
+    <<: *rabbitmq-config
+    container_name: parana_banco_rt_rabbitmq_test
+    ports:
+      - "5673:5672"    # AMQP
+      - "15673:15672"  # Management UI
+    profiles: ["testing"]
+
+  rabbitmq-setup-test:
+    image: curlimages/curl:8.10.1
+    container_name: parana_banco_rt_rabbitmq_setup_test
+    depends_on:
+      rabbitmq-test:
+        condition: service_healthy
+    entrypoint: ["sh", "-c"]
+    command: *rabbitmq-setup-command-testing
+    profiles: ["testing"]
