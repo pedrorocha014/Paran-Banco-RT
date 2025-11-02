@@ -16,6 +16,7 @@ namespace ProposalWebApiUnitTests.Application.Events;
 public class ProposalCreatedEventHandlerTests
 {
     private readonly Mock<IGenericRepository<Proposal>> _mockRepository;
+    private readonly Mock<IGenericRepository<Customer>> _mockCustomerRepository;
     private readonly Mock<ISendEndpointProvider> _mockSendEndpointProvider;
     private readonly Mock<ISendEndpoint> _mockDeniedEndpoint;
     private readonly Mock<ISendEndpoint> _mockApprovedEndpoint;
@@ -26,6 +27,7 @@ public class ProposalCreatedEventHandlerTests
     public ProposalCreatedEventHandlerTests()
     {
         _mockRepository = new Mock<IGenericRepository<Proposal>>();
+        _mockCustomerRepository = new Mock<IGenericRepository<Customer>>();
         _mockSendEndpointProvider = new Mock<ISendEndpointProvider>();
         _mockDeniedEndpoint = new Mock<ISendEndpoint>();
         _mockApprovedEndpoint = new Mock<ISendEndpoint>();
@@ -46,6 +48,7 @@ public class ProposalCreatedEventHandlerTests
 
         _handler = new ProposalCreatedEventHandler(
             _mockRepository.Object,
+            _mockCustomerRepository.Object,
             _mockSendEndpointProvider.Object,
             _mockScoreCalculator.Object);
     }
@@ -54,12 +57,17 @@ public class ProposalCreatedEventHandlerTests
     public async Task Handle_WhenSaveChangesAsyncFail_ShouldReturn()
     {
         // Arrange
-        var proposal = new ProposalBuilder().Build();
+        var customer = new CustomerBuilder().Build();
+        var proposal = new ProposalBuilder().WithCustomerId(customer.Id).Build();
         var @event = new ProposalCreatedEvent() with { Proposal = proposal };
         var score = 250;
 
+        _mockCustomerRepository
+            .Setup(x => x.GetByIdAsync(customer.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(customer));
+
         _mockScoreCalculator
-            .Setup(x => x.CalculateScoreAsync(It.IsAny<CancellationToken>()))
+            .Setup(x => x.CalculateScoreAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(score);
 
         _mockRepository
@@ -94,12 +102,17 @@ public class ProposalCreatedEventHandlerTests
     public async Task Handle_WhenProposalDenied_ShouldPublishToProposalDeniedQueue()
     {
         // Arrange
-        var proposal = new ProposalBuilder().Build();
+        var customer = new CustomerBuilder().Build();
+        var proposal = new ProposalBuilder().WithCustomerId(customer.Id).Build();
         var @event = new ProposalCreatedEvent() with { Proposal = proposal };
         var score = 50; // Score que resulta em Denied
 
+        _mockCustomerRepository
+            .Setup(x => x.GetByIdAsync(customer.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(customer));
+
         _mockScoreCalculator
-            .Setup(x => x.CalculateScoreAsync(It.IsAny<CancellationToken>()))
+            .Setup(x => x.CalculateScoreAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(score);
 
         _mockRepository
@@ -139,12 +152,17 @@ public class ProposalCreatedEventHandlerTests
     public async Task Handle_WhenProposalApprovedWithOneCard_ShouldPublishToProposalApprovedQueueAndCardIssueRequestedQueue()
     {
         // Arrange
-        var proposal = new ProposalBuilder().Build();
+        var customer = new CustomerBuilder().Build();
+        var proposal = new ProposalBuilder().WithCustomerId(customer.Id).Build();
         var @event = new ProposalCreatedEvent() with { Proposal = proposal };
         var score = 250; // Score que resulta em Approved com 1 cartão
 
+        _mockCustomerRepository
+            .Setup(x => x.GetByIdAsync(customer.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(customer));
+
         _mockScoreCalculator
-            .Setup(x => x.CalculateScoreAsync(It.IsAny<CancellationToken>()))
+            .Setup(x => x.CalculateScoreAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(score);
 
         _mockRepository
@@ -194,12 +212,17 @@ public class ProposalCreatedEventHandlerTests
     public async Task Handle_WhenProposalApprovedWithTwoCard_ShouldPublishToProposalApprovedQueueAnd2xCardIssueRequestedQueue()
     {
         // Arrange
-        var proposal = new ProposalBuilder().Build();
+        var customer = new CustomerBuilder().Build();
+        var proposal = new ProposalBuilder().WithCustomerId(customer.Id).Build();
         var @event = new ProposalCreatedEvent() with { Proposal = proposal };
         var score = 750; // Score que resulta em Approved com 2 cartões
 
+        _mockCustomerRepository
+            .Setup(x => x.GetByIdAsync(customer.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Ok(customer));
+
         _mockScoreCalculator
-            .Setup(x => x.CalculateScoreAsync(It.IsAny<CancellationToken>()))
+            .Setup(x => x.CalculateScoreAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(score);
 
         _mockRepository

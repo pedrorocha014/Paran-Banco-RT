@@ -2,6 +2,6 @@ namespace Application.Abstractions;
 
 public interface IScoreCalculator
 {
-    Task<int> CalculateScoreAsync(CancellationToken cancellationToken = default);
+    Task<int> CalculateScoreAsync(string customerName, CancellationToken cancellationToken = default);
 }
 

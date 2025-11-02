@@ -10,14 +10,16 @@ using MassTransit;
 namespace Application.Events.Proposal;
 
 public class ProposalCreatedEventHandler(
-    IGenericRepository<Core.CustomerAggregate.Proposal> repository, 
+    IGenericRepository<Core.CustomerAggregate.Proposal> repository,
+    IGenericRepository<Customer> customerRepository,
     ISendEndpointProvider sendEndpointProvider,
     IScoreCalculator scoreCalculator) : IEventHandler<ProposalCreatedEvent>
 {
     public async Task Handle(ProposalCreatedEvent @event, CancellationToken cancellationToken = default)
     {
-        // Simula uma chamada externa para consultar o score
-        var score = await scoreCalculator.CalculateScoreAsync(cancellationToken); 
+        var customerResult = await customerRepository.GetByIdAsync(@event.Proposal.CustomerId, cancellationToken);
+
+        var score = await scoreCalculator.CalculateScoreAsync(customerResult.Value.Name, cancellationToken); 
 
        @event.Proposal.EvaluateScore(score);
 
