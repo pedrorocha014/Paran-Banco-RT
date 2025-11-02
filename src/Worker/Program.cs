@@ -19,7 +19,8 @@ builder.Services.AddApplication();
 // Configurar HttpClient para fazer chamadas à ProposalWebApi com políticas de resiliência
 builder.Services.AddHttpClient("ProposalWebApi", client =>
 {
-    client.BaseAddress = new Uri("https://localhost:44393");
+    var baseAddress = builder.Configuration["PROPOSAL_WEB_API_BASE_URL"];
+    client.BaseAddress = new Uri(baseAddress!);
     client.DefaultRequestHeaders.Add("Accept", "text/plain");
     client.Timeout = TimeSpan.FromSeconds(300);
 })
@@ -32,7 +33,8 @@ builder.Services.AddHttpClient("ProposalWebApi", client =>
 // Configurar HttpClient para fazer chamadas à CardWebApi com políticas de resiliência
 builder.Services.AddHttpClient("CardWebApi", client =>
 {
-    client.BaseAddress = new Uri("https://localhost:44309");
+    var baseAddress = builder.Configuration["CARD_WEB_API_BASE_URL"];
+    client.BaseAddress = new Uri(baseAddress!);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(300);
 })
