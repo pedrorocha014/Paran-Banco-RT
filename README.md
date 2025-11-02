@@ -15,7 +15,7 @@ O diagrama da solução pode ser visto em: DOCS
 
 ## Fluxo de Criação de Cartão
 
-O fluxo de criação de cartão pode ser visto em: DOCS
+O fluxo de criação de cartão pode ser visto em: [DOCS](https://github.com/pedrorocha014/Paran-Banco-RT/blob/main/solutionItems/docs/FLUXO_CRIACAO_CARTAO.md)
 
 ## Como Executar
 
