@@ -11,7 +11,7 @@ O sistema é composto por múltiplos serviços que se comunicam via mensageria (
 - **CardWebApi**: Gerenciamento de cartões
 - **Worker**: Consumidor de mensagens e orquestrador de processos
 
-O diagrama da solução pode ser visto em: DOCS
+O diagrama da solução pode ser visto em: [DOCS](https://github.com/pedrorocha014/Paran-Banco-RT/blob/main/solutionItems/docs/DIAGRAMA_ARQUITETURA.jpg)
 
 ## Fluxo de Criação de Cartão
 
