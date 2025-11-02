@@ -1,5 +1,6 @@
 ﻿using Application.Abstractions;
 using Application.Events.Proposal;
+using Application.Events.Proposal.Strategy;
 using Core.CustomerAggregate;
 using Core.CustomerAggregate.Events;
 using Core.Interfaces;
@@ -46,11 +47,15 @@ public class ProposalCreatedEventHandlerTests
             .Setup(x => x.GetSendEndpoint(It.Is<Uri>(u => u.ToString().Contains(MessagingConstants.CardIssueRequestedQueue))))
             .ReturnsAsync(_mockCardEndpoint.Object);
 
+        var deniedHandler = new DeniedProposalHandler(_mockSendEndpointProvider.Object);
+        var approvedHandler = new ApprovedProposalHandler(_mockSendEndpointProvider.Object);
+        var handlers = new List<IProposalStatusHandler> { deniedHandler, approvedHandler };
+
         _handler = new ProposalCreatedEventHandler(
             _mockRepository.Object,
             _mockCustomerRepository.Object,
-            _mockSendEndpointProvider.Object,
-            _mockScoreCalculator.Object);
+            _mockScoreCalculator.Object,
+            handlers);
     }
 
     [Fact]

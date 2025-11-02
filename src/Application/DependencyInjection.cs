@@ -1,4 +1,5 @@
 using Application.Abstractions;
+using Application.Events.Proposal.Strategy;
 using Application.Services;
 using Application.UseCases.Cards;
 using Application.UseCases.Customers;
@@ -15,6 +16,10 @@ public static class DependencyInjection
         services.AddScoped<ICreateProposalUseCase, CreateProposalUseCase>();
         services.AddScoped<ICreateCardUseCase, CreateCardUseCase>();
         services.AddScoped<IScoreCalculator, ScoreCalculator>();
+        
+        services.AddScoped<IProposalStatusHandler, DeniedProposalHandler>();
+        services.AddScoped<IProposalStatusHandler, ApprovedProposalHandler>();
+        
         return services;
     }
 }
