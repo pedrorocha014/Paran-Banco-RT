@@ -17,12 +17,16 @@ namespace IntegrationTests.Factories;
 public class WorkerHostFactory : IAsyncDisposable
 {
     private readonly IHost _host;
+    private readonly HttpClientHandler? _proposalApiHandler;
+    private readonly HttpClientHandler? _cardApiHandler;
 
     public WorkerHostFactory(
         string postgresConnectionString,
         string rabbitMqConnectionString,
         string proposalWebApiBaseUrl,
-        string cardWebApiBaseUrl)
+        string cardWebApiBaseUrl,
+        HttpMessageHandler? proposalApiHandler = null,
+        HttpMessageHandler? cardApiHandler = null)
     {
         var builder = Host.CreateApplicationBuilder();
         
@@ -44,10 +48,10 @@ public class WorkerHostFactory : IAsyncDisposable
         builder.Services.AddHttpClient("ProposalWebApi", client =>
         {
             client.BaseAddress = new Uri(proposalWebApiBaseUrl);
-            client.DefaultRequestHeaders.Add("Accept", "text/plain");
+            client.DefaultRequestHeaders.Add("Accept", "plain/text");
             client.Timeout = TimeSpan.FromSeconds(300);
         })
-        .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        .ConfigurePrimaryHttpMessageHandler(() => proposalApiHandler ?? new HttpClientHandler
         {
             ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
         })
@@ -59,7 +63,7 @@ public class WorkerHostFactory : IAsyncDisposable
             client.DefaultRequestHeaders.Add("Accept", "application/json");
             client.Timeout = TimeSpan.FromSeconds(300);
         })
-        .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        .ConfigurePrimaryHttpMessageHandler(() => cardApiHandler ?? new HttpClientHandler
         {
             ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
         })

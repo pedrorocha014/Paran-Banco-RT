@@ -25,11 +25,8 @@ public class SharedTestFixture : IAsyncLifetime, IDisposable
 
     public async Task InitializeAsync()
     {
-        await TestContainersHelper.InitializeAsync();
-
         var postgresConnectionString = PostgresHelper.ConnectionString;
-        var (rabbitHost, rabbitPort) = TestContainersHelper.GetRabbitMqConnectionInfo();
-        var rabbitMqConnectionString = $"amqp://{rabbitHost}:{rabbitPort}/";
+        var rabbitMqConnectionString = $"amqp://localhost:5672/";
 
         _customerApiFactory = new CustomerWebApiFactory(postgresConnectionString, rabbitMqConnectionString);
         _proposalApiFactory = new ProposalWebApiFactory(postgresConnectionString, rabbitMqConnectionString);
@@ -44,18 +41,24 @@ public class SharedTestFixture : IAsyncLifetime, IDisposable
 
         PostgresHelper.SetContext(_customerApiScope);
 
-        var customerApiBaseUrl = CustomerApiClient.BaseAddress?.ToString() ?? "http://localhost";
-        var proposalApiBaseUrl = ProposalApiClient.BaseAddress?.ToString() ?? "http://localhost";
-        var cardApiBaseUrl = CardApiClient.BaseAddress?.ToString() ?? "http://localhost";
+        var customerApiBaseUrl = _customerApiFactory.Server.BaseAddress.ToString();
+        var proposalApiBaseUrl = _proposalApiFactory.Server.BaseAddress.ToString();
+        var cardApiBaseUrl = _cardApiFactory.Server.BaseAddress.ToString();
 
         proposalApiBaseUrl = proposalApiBaseUrl.TrimEnd('/');
         cardApiBaseUrl = cardApiBaseUrl.TrimEnd('/');
+
+        // Usar os handlers do TestServer para permitir que o Worker faça chamadas HTTP
+        var proposalApiHandler = _proposalApiFactory.Server.CreateHandler();
+        var cardApiHandler = _cardApiFactory.Server.CreateHandler();
 
         _workerHostFactory = new WorkerHostFactory(
             postgresConnectionString,
             rabbitMqConnectionString,
             proposalApiBaseUrl,
-            cardApiBaseUrl);
+            cardApiBaseUrl,
+            proposalApiHandler,
+            cardApiHandler);
 
         await _workerHostFactory.StartAsync();
 
@@ -82,8 +85,6 @@ public class SharedTestFixture : IAsyncLifetime, IDisposable
         _cardApiScope?.Dispose();
 
         DbContext?.Dispose();
-
-        await TestContainersHelper.DisposeAsync();
     }
 
     public void Dispose()
